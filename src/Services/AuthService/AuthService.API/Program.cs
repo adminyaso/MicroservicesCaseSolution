@@ -1,41 +1,74 @@
+using AuthService.Infrastructure.Extensions;
+using AuthService.Infrastructure.Seed;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Swagger desteði
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// JWT Authentication ayarlanmasý
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(opt =>
+    {
+        opt.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true, // Token imza doðrulanmasý
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
+            ValidateIssuer = true, // Token'ý oluþturan kimliði doðrula
+            ValidateAudience = true, // Token hedefini doðrula
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidateLifetime = true // Token süresini kontrol et
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    // Visitor kontrolü  UI tarafýndan geleceði için entegre edilmedi.
+    options.AddPolicy("AllRoles", policy =>
+        policy.RequireRole("User", "Admin"));
+
+    // En az user seviyesi
+    options.AddPolicy("MinUser", policy =>
+        policy.RequireRole("User", "Admin"));
+});
+
+// Infrastructure katmaný DI ayarlarýný çaðýrýyoruz
+builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Controller eklemesi
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+    await RoleSeeder.SeedRolesAsync(roleManager);
+}
+
+// Development ortamýndaysak Swagger UI'ý aktif hale getiriyoruz
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
+// HTTPS yönlendirmesi aktif edilir
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+// Authentication (JWT doðrulama) middleware eklenir
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+// Controller endpointleri eþlenir.
+app.MapControllers();
 
+// Uygulamayý çalýþtýrýyoruz.
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

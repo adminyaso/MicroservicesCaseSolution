@@ -1,10 +1,14 @@
 using LogService.Infrastructure.Extensions;
 using Serilog;
+using Shared.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog'u yapýlandýr
-builder.Services.AddSerilogLogging(builder.Configuration);
+// Ortak loglama yapýlandýrmasý.
+builder.Services.AddSharedLogging(builder.Configuration);
+
+// DI Kayýtlarý
+builder.Services.AddLogInfrastructureServices(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -17,22 +21,21 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+// Ortak request loglama middleware'i
+app.UseSharedRequestLogging();
+
 app.MapControllers();
 
-app.Run();
-
-//Serilog middleware(Request loglama yapýlacak)
-//app.UseSerilogRequestLogging();
-//try
-//{
-//    Log.Information("Log Service Baþlatýldý");
-//    app.Run();
-//}
-//catch (Exception ex)
-//{
-//    Log.Fatal(ex, "Uygulama beklenmedik þekilde durdu!");
-//}
-//finally
-//{
-//    Log.CloseAndFlush();
-//}
+try
+{
+    Log.Information("Log Service Baþlatýldý");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Uygulama beklenmedik þekilde durdu!");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

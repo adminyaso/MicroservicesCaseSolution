@@ -1,37 +1,48 @@
 ﻿
 using StackExchange.Redis;
+using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace Shared.Cache
+namespace Cache
 {
-    public class RedisCacheService
+    public class RedisCacheService : ICacheService, IDisposable
     {
         private readonly ConnectionMultiplexer _redis;
         private readonly IDatabase _database;
 
         public RedisCacheService(string connectionString)
         {
-            // Redis bağlantısını kuruyoruz.
             _redis = ConnectionMultiplexer.Connect(connectionString);
             _database = _redis.GetDatabase();
         }
 
-        /// Belirtilen anahtara verilen değeri cache'e yazar.
-        public async Task SetAsync(string key, string value)
+        public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
         {
-            await _database.StringSetAsync(key, value);
+            var json = JsonSerializer.Serialize(value);
+            await _database.StringSetAsync(key, json, expiry);
         }
 
-        /// Belirtilen anahtara karşılık gelen değeri cache'den alır.
-        public async Task<string?> GetAsync(string key)
+        public async Task<T> GetAsync<T>(string key)
         {
-            return await _database.StringGetAsync(key);
+            var value = await _database.StringGetAsync(key);
+            if (value.IsNullOrEmpty)
+                return default;
+            return JsonSerializer.Deserialize<T>(value);
         }
 
-        /// Belirtilen anahtarın cache'den silinmesini sağlar.
-        public async Task<bool> RemoveAsync(string key)
+        public async Task RemoveAsync(string key)
         {
-            return await _database.KeyDeleteAsync(key);
+            await _database.KeyDeleteAsync(key);
+        }
+
+        public void Dispose()
+        {
+            if (_redis != null)
+            {
+                _redis.Close();
+                _redis.Dispose();
+            }
         }
     }
 }

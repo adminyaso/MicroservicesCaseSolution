@@ -6,7 +6,7 @@ namespace AuthService.Infrastructure.Seed
     {
         public static async Task SeedRolesAsync(RoleManager<IdentityRole<Guid>> roleManager)
         {
-            string[] roles = new[] { "User", "Admin" };
+            string[] roles = ["User", "Admin"];
 
             foreach (var role in roles)
             {

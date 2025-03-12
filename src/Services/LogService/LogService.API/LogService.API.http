@@ -1,6 +1,0 @@
-@LogService.API_HostAddress = http://localhost:5052
-
-GET {{LogService.API_HostAddress}}
-Accept: application/json
-
-###

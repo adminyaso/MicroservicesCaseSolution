@@ -3,6 +3,7 @@ using AuthService.Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Shared.Logging;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,19 +29,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization(options =>
-{
-    // Visitor kontrolü  UI tarafýndan geleceði için entegre edilmedi.
-    options.AddPolicy("AllRoles", policy =>
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("AllRoles", policy =>
+        policy.RequireRole("User", "Admin"))
+    .AddPolicy("MinUser", policy =>
         policy.RequireRole("User", "Admin"));
-
-    // En az user seviyesi
-    options.AddPolicy("MinUser", policy =>
-        policy.RequireRole("User", "Admin"));
-});
 
 // Infrastructure katmaný DI ayarlarýný çaðýrýyoruz
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Ortak loglama yapýlandýrmasý.
+builder.Services.AddSharedLogging(builder.Configuration);
 
 // Controller eklemesi
 builder.Services.AddControllers();

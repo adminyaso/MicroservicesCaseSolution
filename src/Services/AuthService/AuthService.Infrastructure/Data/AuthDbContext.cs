@@ -5,12 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Infrastructure.Data
 {
-    public class AuthDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
+    public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options)
     {
-        public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
-        {
-        }
-
         public DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

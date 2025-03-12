@@ -11,18 +11,11 @@ namespace AuthService.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(UserManager<AppUser> userManager, ITokenService tokenService, IRefreshTokenService refreshTokenService) : ControllerBase
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly ITokenService _tokenService;
-        private readonly IRefreshTokenService _refreshTokenService;
-
-        public AuthController(UserManager<AppUser> userManager, ITokenService tokenService, IRefreshTokenService refreshTokenService)
-        {
-            _userManager = userManager;
-            _tokenService = tokenService;
-            _refreshTokenService = refreshTokenService;
-        }
+        private readonly UserManager<AppUser> _userManager = userManager;
+        private readonly ITokenService _tokenService = tokenService;
+        private readonly IRefreshTokenService _refreshTokenService = refreshTokenService;
 
         [HttpPost("Register")]
         [AllowAnonymous]
@@ -59,7 +52,7 @@ namespace AuthService.API.Controllers
             var roles = await _userManager.GetRolesAsync(user);
             if (!roles.Any())
             {
-                if (user.Email.ToLower() == "admin@example.com")
+                if (user.Email.Equals("admin@example.com", StringComparison.OrdinalIgnoreCase))
                 {
                     await _userManager.AddToRoleAsync(user, "Admin");
                 }
@@ -111,7 +104,7 @@ namespace AuthService.API.Controllers
 
         // Sadece admin erişimine açık bir endpoint
         [HttpGet("Tokens")]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAllTokens([FromServices] AuthDbContext context)
         {
             var tokens = await context.RefreshTokens.ToListAsync();

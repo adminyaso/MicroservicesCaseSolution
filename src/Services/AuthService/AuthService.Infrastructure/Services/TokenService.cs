@@ -10,18 +10,11 @@ using System.Text;
 
 namespace AuthService.Infrastructure.Services
 {
-    public class TokenService : ITokenService
+    public class TokenService(UserManager<AppUser> userManager, IConfiguration configuration, IRefreshTokenService refreshTokenService) : ITokenService
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly IConfiguration _configuration;
-        private readonly IRefreshTokenService _refreshTokenService;
-
-        public TokenService(UserManager<AppUser> userManager, IConfiguration configuration, IRefreshTokenService refreshTokenService)
-        {
-            _userManager = userManager;
-            _configuration = configuration;
-            _refreshTokenService = refreshTokenService;
-        }
+        private readonly UserManager<AppUser> _userManager = userManager;
+        private readonly IConfiguration _configuration = configuration;
+        private readonly IRefreshTokenService _refreshTokenService = refreshTokenService;
 
         public async Task<TokenDto> GenerateTokenAsync(AppUser user)
         {

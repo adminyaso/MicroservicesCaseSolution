@@ -6,14 +6,9 @@ using System.Security.Cryptography;
 
 namespace AuthService.Infrastructure.Services
 {
-    public class RefreshTokenService : IRefreshTokenService
+    public class RefreshTokenService(AuthDbContext context) : IRefreshTokenService
     {
-        private readonly AuthDbContext _context;
-
-        public RefreshTokenService(AuthDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AuthDbContext _context = context;
 
         public async Task<RefreshToken> GenerateRefreshTokenAsync(AppUser user)
         {
@@ -33,7 +28,7 @@ namespace AuthService.Infrastructure.Services
             return refreshToken;
         }
 
-        private string GenerateSecureToken()
+        private static string GenerateSecureToken()
         {
             // Güvenli rastgele bir token oluşturmak için
             using var rng = RandomNumberGenerator.Create();

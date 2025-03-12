@@ -1,9 +1,6 @@
 ﻿using ProductService.Application.Interfaces;
 using ProductService.Domain.Entities;
 using Cache; //ICacheService için
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace ProductService.Infrastructure.Repositories
 {
@@ -29,14 +26,14 @@ namespace ProductService.Infrastructure.Repositories
             var cachedProducts = await _cacheService.GetAsync<IEnumerable<Product>>(CacheKey);
             if (cachedProducts != null)
             {
-                // Cache'de veri varsa, direkt onu döneriz.
+                // Cache'de veri varsa, direkt onu döner.
                 return cachedProducts;
             }
 
             // Cache'de yoksa, veritabanından ürünleri çekiyoruz.
             var products = await _innerRepository.GetAllProductsAsync();
 
-            // Çekilen veriyi Redis cache'e belirlenen süreyle kaydediyoruz.
+            // Çekilen veriyi Redis cache'e belirlenen süreyle kaydetme.
             await _cacheService.SetAsync(CacheKey, products, CacheDuration);
 
             return products;
@@ -59,21 +56,21 @@ namespace ProductService.Infrastructure.Repositories
             return product;
         }
 
-        // Ürün ekleme işlemi sonrası cache geçersiz kılınır.
+        // Ürün ekleme işlemi sonrası cache.
         public async Task AddProductAsync(Product product)
         {
             await _innerRepository.AddProductAsync(product);
-            await _cacheService.RemoveAsync(CacheKey);
-            // Opsiyonel: Tekil ürün cache'ini de güncelleyebilirsiniz.
+            // Ürün cache'ini de güncelleme.
             var cacheKey = $"Product_{product.ProductId}";
             await _cacheService.SetAsync(cacheKey, product, CacheDuration);
         }
 
-        // Ürün güncelleme işlemi sonrası cache geçersiz kılınır.
+        // Ürün güncelleme işlemi sonrası cache
         public async Task UpdateProductAsync(Product product)
         {
             await _innerRepository.UpdateProductAsync(product);
-            await _cacheService.RemoveAsync(CacheKey);
+            // Ürün güncelleme sonrası cache invalidation
+            //await _cacheService.RemoveAsync(CacheKey);
             var cacheKey = $"Product_{product.ProductId}";
             await _cacheService.RemoveAsync(cacheKey);
             // Opsiyonel: Yeni veriyi cache'e ekleyebilirsiniz.

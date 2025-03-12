@@ -9,6 +9,6 @@ namespace LogService.Infrastructure.Data
         {
         }
 
-        public DbSet<LogEntry> LogEntries { get; set; }
+        public DbSet<LogEntry> Logs { get; set; }
     }
 }

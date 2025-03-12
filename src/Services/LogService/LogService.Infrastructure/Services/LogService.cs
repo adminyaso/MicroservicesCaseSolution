@@ -40,7 +40,7 @@ namespace LogService.Infrastructure.Services
                 SourceContext = logDto.SourceContext
             };
 
-            _context.LogEntries.Add(logEntry);
+            _context.Logs.Add(logEntry);
             await _context.SaveChangesAsync();
 
             // Alerting: Eğer log seviyesi ERROR veya FATAL ise alert gönder
@@ -53,7 +53,7 @@ namespace LogService.Infrastructure.Services
 
         public async Task<IEnumerable<LogDto>> GetLogsAsync()
         {
-            return await _context.LogEntries
+            return await _context.Logs
                 .Select(logentity => new LogDto
                 {
                     Id = logentity.Id,
@@ -74,7 +74,7 @@ namespace LogService.Infrastructure.Services
 
         public async Task<LogReportDto> GetLogReportAsync(LogReportFilterDto filter)
         {
-            var query = _context.LogEntries.AsQueryable();
+            var query = _context.Logs.AsQueryable();
 
             if (filter.StartDate.HasValue)
                 query = query.Where(le => le.Timestamp >= filter.StartDate.Value);

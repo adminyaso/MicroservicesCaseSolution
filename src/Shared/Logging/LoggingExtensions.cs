@@ -44,7 +44,7 @@ namespace Shared.Logging
                 .WriteTo.Seq(configuration["Seq:ServerUrl"] ?? "http://localhost:5341")
                 .WriteTo.MSSqlServer(
                     connectionString: connectionString,
-                    sinkOptions: new MSSqlServerSinkOptions { TableName = "LogEntry", AutoCreateSqlTable = true },
+                    sinkOptions: new MSSqlServerSinkOptions { TableName = "Logs", AutoCreateSqlTable = true },
                     columnOptions: columnOptions)
                 .CreateLogger();
 

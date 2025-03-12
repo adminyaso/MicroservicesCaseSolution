@@ -1,6 +1,8 @@
 ﻿using ProductService.Application.Interfaces;
 using ProductService.Domain.Entities;
-using Cache; //ICacheService için
+using Cache;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace ProductService.Infrastructure.Repositories
 {
@@ -26,6 +28,7 @@ namespace ProductService.Infrastructure.Repositories
             var cachedProducts = await _cacheService.GetAsync<IEnumerable<Product>>(CacheKey);
             if (cachedProducts != null)
             {
+                Log.Information("GetAll CACHE'ten alındı.");
                 // Cache'de veri varsa, direkt onu döner.
                 return cachedProducts;
             }
@@ -69,8 +72,6 @@ namespace ProductService.Infrastructure.Repositories
         public async Task UpdateProductAsync(Product product)
         {
             await _innerRepository.UpdateProductAsync(product);
-            // Ürün güncelleme sonrası cache invalidation
-            //await _cacheService.RemoveAsync(CacheKey);
             var cacheKey = $"Product_{product.ProductId}";
             await _cacheService.RemoveAsync(cacheKey);
             // Opsiyonel: Yeni veriyi cache'e ekleyebilirsiniz.

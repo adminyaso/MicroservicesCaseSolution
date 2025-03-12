@@ -52,12 +52,8 @@ using (var scope = app.Services.CreateScope())
     await RoleSeeder.SeedRolesAsync(roleManager);
 }
 
-// Development ortamýndaysak Swagger UI'ý aktif hale getiriyoruz
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // HTTPS yönlendirmesi aktif edilir
 app.UseHttpsRedirection();

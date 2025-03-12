@@ -1,4 +1,5 @@
 using LogService.Infrastructure.Extensions;
+using LogService.Infrastructure.Kafka;
 using Serilog;
 using Shared.Logging;
 
@@ -9,6 +10,7 @@ builder.Services.AddSharedLogging(builder.Configuration);
 
 // DI Kayýtlarý
 builder.Services.AddLogInfrastructureServices(builder.Configuration);
+builder.Services.AddHostedService<KafkaEventConsumer>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

@@ -4,6 +4,7 @@ using ProductService.Application.Commands;
 using ProductService.Application.DTOs;
 using ProductService.Application.Interfaces;
 using ProductService.Domain.Events;
+using Serilog;
 
 namespace ProductService.Application.Handlers
 {
@@ -28,7 +29,8 @@ namespace ProductService.Application.Handlers
             var product = await _productRepository.GetProductByIdAsync(updateDto.ProductId);
             if (product == null)
             {
-                throw new Exception("Ürün bulunamadı.");
+                Log.Error("{ProductId} bulunamadı.", updateDto.ProductId);
+                throw new InvalidOperationException($"Product with id {updateDto.ProductId} not found.");
             }
 
             // AutoMapper kullanarak updateDto'dan gelen verilerle mevcut ürünü güncelliyoruz.
@@ -38,6 +40,7 @@ namespace ProductService.Application.Handlers
             await _productRepository.UpdateProductAsync(product);
             // Ürün güncelleme işlemi başarılıysa, event oluştur ve yayınla
             var productUpdatedEvent = _mapper.Map<ProductUpdatedEvent>(product);
+            Log.Information("Product güncelleme eventi publishing başladı. ProductId: {ProductId}", product.ProductId);
             // UpdateEvent'i asenkron olarak Kafka üzerinden yayınla
             await _eventPublisher.PublishAsync(productUpdatedEvent, cancellationToken);
             // Güncellenmiş ürünü ProductDto'ya mapleyip döndürüyoruz.

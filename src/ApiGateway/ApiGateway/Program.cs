@@ -1,67 +1,72 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Yarp.ReverseProxy.Configuration;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// JWT yapýlandýrmasý (API Gateway'de merkezi kimlik doðrulama için)
+// Konfigürasyonlarý al
+var jwtConfig = builder.Configuration.GetSection("Jwt");
+
+// JWT Authentication ekle
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt =>
+    .AddJwtBearer(options =>
     {
-        opt.TokenValidationParameters = new TokenValidationParameters
+        options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuerSigningKey = true, // Token imza doðrulanmasý
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)),
-            ValidateIssuer = true, // Token'ý oluþturan kimliði doðrula
-            ValidateAudience = true, // Token hedefini doðrula
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            ValidateLifetime = true // Token süresini kontrol et
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtConfig["Issuer"],
+            ValidAudience = jwtConfig["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig["Secret"]))
         };
     });
 
-// Rate Limiting için özel politika tanýmlayalým
-builder.Services.AddRateLimiter(options =>
-{
-    options.AddPolicy("RateLimitingPolicy", context =>
-    {
-        // Client IP bazýnda limit
-        var clientIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return RateLimitPartition.GetFixedWindowLimiter(clientIp, partition =>
-            new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 10,// Örneðin, 10 istek/pencere
-                Window = TimeSpan.FromMinutes(1),// 1 dakikalýk pencere
-                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 0
-            });
-    });
-    options.RejectionStatusCode = 429;// Rate limit aþýldýðýnda 429 döner
-});
-
-// YARP Reverse Proxy ve diðer servis konfigürasyonlarý
-builder.Services.AddAuthentication();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization();  // Yetkilendirme ekle
+// YARP Reverse Proxy ekle
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
+// Rate Limiting politikasý ekle
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("RateLimitingPolicy", limiterOptions =>
+    {
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.PermitLimit = 10;                 // 1 dakikada 10 istek
+        limiterOptions.QueueLimit = 100;                 // Kuyrukta maksimum 100 istek
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+});
+
 var app = builder.Build();
 
-// Global middleware yerine, sadece belirli endpoint’lerde kullanacaðýz
-// YARP'nin Reverse Proxy'si tüm istekleri alýrken,
-// ürün listeleme için ayrý bir endpoint tanýmlayýp bu endpoint’e özel rate limiting uygulanabilir.
+// Middleware pipeline
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseRateLimiter();
 
-app.MapGet("/api/products/list", async (HttpContext context) =>
+// Belirli Endpoint için Rate Limiting
+app.MapGet("/api/Products/List", async (HttpContext context) =>
 {
-    // Ýlgili ürün mikroservisine prox.
-    await context.Response.WriteAsync("Ürün listesi (Rate Limited Endpoint)");
-})
-.RequireRateLimiting("RateLimitingPolicy");
+    using var cts = CancellationTokenSource.CreateLinkedTokenSource(context.RequestAborted);
+    cts.CancelAfter(TimeSpan.FromSeconds(10));
 
-// Diðer reverse proxy rotalarýný API Gateway üzerinden yapýlandýrma
+    await context.Response.WriteAsync("Ürün listesi (Rate Limited Endpoint)", cts.Token);
+}).RequireRateLimiting("RateLimitingPolicy")
+  .RequireAuthorization();
+
+app.MapGet("/api/Product/Update", async (HttpContext context) =>
+{
+    await context.Response.WriteAsync("Bu endpoint'e sadece yetkili kullanýcýlar eriþebilir!");
+}).RequireAuthorization();
+
+
+// Diðer tüm istekleri YARP Reverse Proxy ile yönlendir
 app.MapReverseProxy();
 
 app.Run();

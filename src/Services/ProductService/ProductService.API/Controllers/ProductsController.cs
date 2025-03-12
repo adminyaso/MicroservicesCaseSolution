@@ -29,7 +29,7 @@ namespace ProductService.API.Controllers
 
         // Ürün güncelleme
         [HttpPut("Update")]
-        [Authorize]  // JWT doğrulaması
+        /*[Authorize]*/  // JWT doğrulaması
         public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductDto dto)
         {
             var command = new UpdateProductCommand(dto);

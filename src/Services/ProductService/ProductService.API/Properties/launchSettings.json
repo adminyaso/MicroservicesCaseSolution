@@ -25,7 +25,7 @@
       },
       "publishAllPorts": true,
       "useSSL": true
-    }
-  },
-  "$schema": "https://json.schemastore.org/launchsettings.json"
+    },
+    { "$schema": "https://json.schemastore.org/launchsettings.json" }
+  }
 }

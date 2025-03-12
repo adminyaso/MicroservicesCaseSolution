@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using ProductService.Application.DTOs;
 using ProductService.Domain.Entities;
+using ProductService.Domain.Events;
 
 namespace ProductService.Application.Mapping
 {
@@ -15,6 +16,10 @@ namespace ProductService.Application.Mapping
             CreateMap<CreateProductDto, Product>();
 
             CreateMap<UpdateProductDto, Product>();
+
+            // Entity'den Publish'e eşleme
+            CreateMap<Product, ProductCreatedEvent>();
+            CreateMap<Product, ProductUpdatedEvent>();
         }
     }
 }

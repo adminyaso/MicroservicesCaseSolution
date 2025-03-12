@@ -5,6 +5,7 @@ using ProductService.Application.Handlers;
 using ProductService.Application.Interfaces;
 using ProductService.Application.Mapping;
 using ProductService.Infrastructure.Data;
+using ProductService.Infrastructure.Kafka;
 using ProductService.Infrastructure.Repositories;
 using Shared.Logging;
 using System.Reflection;
@@ -20,6 +21,8 @@ builder.Services.AddDbContext<ProductDbContext>(options =>
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 // Repository'yi cache decorator ile sarmalama
 builder.Services.Decorate<IProductRepository, CachedProductRepository>();
+// Kafka publisher ile yayýnlama kaydý.
+builder.Services.AddScoped<IEventPublisher, KafkaEventPublisher>();
 
 builder.Services.AddMediatR(Assembly.GetExecutingAssembly());
 builder.Services.AddMediatR(typeof(GetAllProductsQueryHandler).Assembly);

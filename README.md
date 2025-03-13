@@ -17,7 +17,7 @@ Bu proje, mikroservis mimarisi, Onion Mimarisi, CQRS, JWT kimlik doğrulaması, 
 1. **Kodun İndirilmesi/Clone Edilmesi:**  
    Proje deposunu lokal ortamınıza klonlayın:
    ```
-   git clone <repository-url>
+   git clone https://github.com/adminyaso/MicroservicesCaseSolution.git
    cd MicroservicesCaseSolution
    ```
 

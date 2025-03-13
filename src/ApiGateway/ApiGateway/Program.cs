@@ -37,7 +37,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter("RateLimitingPolicy", limiterOptions =>
     {
         limiterOptions.Window = TimeSpan.FromMinutes(1);
-        limiterOptions.PermitLimit = 10;                 // 1 dakikada 10 istek
+        limiterOptions.PermitLimit = 100;                 // 1 dakikada 100 istek
         limiterOptions.QueueLimit = 100;                 // Kuyrukta maksimum 100 istek
         limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
     });

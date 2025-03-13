@@ -8,6 +8,7 @@ services:
       ports:
         - "8080:80"
       environment:
+        - ASPNETCORE_URLS=http://+:80 #dinlediği port
         - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=DbKayraTask;User Id=test12;Password=test12;TrustServerCertificate=True;
       depends_on:
         - authservice-api

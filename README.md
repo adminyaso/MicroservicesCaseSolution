@@ -97,13 +97,10 @@ Bu proje, mikroservis mimarisi, Onion Mimarisi, CQRS, JWT kimlik doğrulaması, 
 ---
 
 ## Dağıtım
-
+CI/CD sonrası veya manuel testler sonrası,
 Projeyi dağıtmak için aşağıdaki adımları izleyebilirsiniz:
 
-1. **CI/CD Süreci:**  
-   eklenecek...
-
-2. **Docker Image Oluşturma ve Dağıtım:**  
+1. **Docker Image Oluşturma ve Dağıtım:**  
    ```
    docker build -t yourusername/authservice:latest -f src/AuthService/AuthService.API/Dockerfile .
    docker build -t yourusername/productservice:latest -f src/ProductService/ProductService.API/Dockerfile .
@@ -112,7 +109,7 @@ Projeyi dağıtmak için aşağıdaki adımları izleyebilirsiniz:
    ```
    Oluşturduğunuz image’leri Docker Hub veya tercih ettiğiniz container registry’ye push edebilirsiniz.
 
-3. **Dağıtım Platformunda Container’ları Çalıştırma:**  
+2. **Dağıtım Platformunda Container’ları Çalıştırma:**  
    Örneğin Kubernetes kullanıyorsanız, ilgili deployment ve service manifest dosyalarını oluşturun ve uygulayın.
 
 ---
